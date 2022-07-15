@@ -169,7 +169,9 @@ public class GrpcLogAppender extends LogAppenderBase {
 
   private boolean isSlowFollower() {
     final TimeDuration elapsedTime = getFollower().getLastRpcResponseTime().elapsedTime();
-    return elapsedTime.compareTo(getServer().properties().rpcSlownessTimeout()) > 0;
+    System.out.println("-----> slowness:" + getServer().properties().rpcSlownessTimeout());
+    boolean isSlow = elapsedTime.compareTo(getServer().properties().rpcSlownessTimeout()) > 0;
+    return isSlow;
   }
 
   private void mayWait() {
