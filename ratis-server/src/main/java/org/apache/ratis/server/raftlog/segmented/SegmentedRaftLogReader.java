@@ -308,14 +308,16 @@ class SegmentedRaftLogReader implements Closeable {
     IOUtils.readFully(in, temp, 0, totalLength);
 
     // verify checksum
-    System.out.println("===============> Checking...");
+    
     checksum.reset();
     checksum.update(temp, 0, totalLength);
     int expectedChecksum = in.readInt();
     int calculatedChecksum = (int) checksum.getValue();
+    System.out.println("===============> Checking..." + expectedChecksum + " /" + calculatedChecksum);
     if (expectedChecksum != calculatedChecksum) {
       final String s = StringUtils.format("Log entry corrupted: Calculated checksum is %08X but read checksum is %08X.",
           calculatedChecksum, expectedChecksum);
+      System.out.println("~~~~~~~~~~~~~~~ChecksumException");
       throw new ChecksumException(s, limiter.markPos);
     }
 
