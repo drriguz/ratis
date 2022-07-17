@@ -158,10 +158,20 @@ public class GrpcLogAppender extends LogAppenderBase {
   public long getWaitTimeMs() {
     if (haveTooManyPendingRequests()) {
       return getHeartbeatWaitTimeMs(); // Should wait for a short time
-    } else if (shouldSendAppendEntries()) {
+    } else if (shouldSendAppendEntries() && !isSlowFollower()) {
+      // For normal nodes, new entries should be sent ASAP
+      // however for slow followers (especially when the follower is down),
+      // keep sending without any wait time only ends up in high CPU load
       return 0L;
     }
     return Math.min(10L, getHeartbeatWaitTimeMs());
+  }
+
+  private boolean isSlowFollower() {
+    final TimeDuration elapsedTime = getFollower().getLastRpcResponseTime().elapsedTime();
+    System.out.println("-----> slowness:" + getServer().properties().rpcSlownessTimeout());
+    boolean isSlow = elapsedTime.compareTo(getServer().properties().rpcSlownessTimeout()) > 0;
+    return isSlow;
   }
 
   private void mayWait() {
