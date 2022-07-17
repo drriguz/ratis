@@ -308,6 +308,7 @@ class SegmentedRaftLogReader implements Closeable {
     IOUtils.readFully(in, temp, 0, totalLength);
 
     // verify checksum
+    System.out.println("===============> Checking...");
     checksum.reset();
     checksum.update(temp, 0, totalLength);
     int expectedChecksum = in.readInt();
