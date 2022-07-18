@@ -375,7 +375,7 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
     // corrupt the log
     final File openLogFile = JavaUtils.attemptRepeatedly(() -> getOpenLogFile(leader),
         10, HUNDRED_MILLIS, id + "-getOpenLogFile", LOG);
-    try(final RandomAccessFile raf = new RandomAccessFile(openLogFile, "rw")) {
+    try(final RandomAccessFile raf = new RandomAccessFile(openLogFile, "rwd")) {
       final long mid = size / 2;
       raf.seek(mid);
       for (long i = mid; i < size; i++) {
