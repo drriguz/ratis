@@ -378,9 +378,10 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
     try(final RandomAccessFile raf = new RandomAccessFile(openLogFile, "rwd")) {
       final long mid = size / 2;
       raf.seek(mid);
-      for (long i = mid; i < size; i++) {
+      for (long i = mid; i < size -1; i++) {
         raf.write(0);
       }
+      raf.write(1);
     }
 
     try(final RandomAccessFile raf = new RandomAccessFile(openLogFile, "rw")) {
