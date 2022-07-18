@@ -49,7 +49,6 @@ import org.apache.ratis.util.StringUtils;
 import org.apache.ratis.util.TimeDuration;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.Ignore;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -85,7 +84,6 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
   }
 
   @Test
-  @Ignore
   public void testRestartFollower() throws Exception {
     runWithNewCluster(NUM_SERVERS, this::runTestRestartFollower);
   }
@@ -184,7 +182,6 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
   }
 
   @Test
-  @Ignore
   public void testRestartWithCorruptedLogHeader() throws Exception {
     runWithNewCluster(NUM_SERVERS, this::runTestRestartWithCorruptedLogHeader);
   }
@@ -229,7 +226,6 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
   }
 
   @Test
-  @Ignore
   public void testRestartCommitIndex() throws Exception {
     runWithNewCluster(NUM_SERVERS, this::runTestRestartCommitIndex);
   }
