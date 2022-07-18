@@ -382,6 +382,15 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
         raf.write(0);
       }
     }
+
+    try(final RandomAccessFile raf = new RandomAccessFile(openLogFile, "rw")) {
+      int i;
+      while((i = raf.read()) != -1) {
+        System.out.print(i);
+      }
+      System.out.println();
+    }
+
     System.out.println("-----> Log corrupted!" + size + " /" + openLogFile.getPath());
     // after the log is corrupted and the server is restarted, the last entry should no longer exist.
     cluster.restartServer(id, false);
