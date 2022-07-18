@@ -330,7 +330,6 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
   }
 
   @Test
-  @Ignore
   public void testRestartWithCorruptedLogEntryWithWarnAndReturn() throws Exception {
     final RaftProperties p = getProperties();
     final Log.CorruptionPolicy policy = Log.corruptionPolicy(p);
