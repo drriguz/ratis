@@ -149,6 +149,7 @@ class SegmentedRaftLogReader implements Closeable {
     in = new DataInputStream(limiter);
     checksum = new PureJavaCrc32C();
     this.raftLogMetrics = raftLogMetrics;
+    System.out.println(">>>>>>>>>>>>>>>>>>>>>>" + file.getPath());
   }
 
   /**

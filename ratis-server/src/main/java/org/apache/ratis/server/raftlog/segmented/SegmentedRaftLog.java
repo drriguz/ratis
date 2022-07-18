@@ -213,6 +213,7 @@ public class SegmentedRaftLog extends RaftLogBase {
   protected void openImpl(long lastIndexInSnapshot, Consumer<LogEntryProto> consumer) throws IOException {
     loadLogSegments(lastIndexInSnapshot, consumer);
     final File openSegmentFile = Optional.ofNullable(cache.getOpenSegment()).map(LogSegment::getFile).orElse(null);
+    System.out.println("######### " + openSegmentFile);
     fileLogWorker.start(Math.max(cache.getEndIndex(), lastIndexInSnapshot),
         Math.min(cache.getLastIndexInClosedSegments(), lastIndexInSnapshot),
         openSegmentFile);

@@ -380,7 +380,7 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
         raf.write(0);
       }
     }
-    System.out.println("-----> Log corrupted!" + size);
+    System.out.println("-----> Log corrupted!" + size + " /" + openLogFile.getPath());
     // after the log is corrupted and the server is restarted, the last entry should no longer exist.
     cluster.restartServer(id, false);
     testFailureCase("last-entry-not-found", () -> {
