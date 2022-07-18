@@ -369,6 +369,7 @@ public abstract class ServerRestartTests<CLUSTER extends MiniRaftCluster>
     final RaftLog log = leader.getRaftLog();
     System.out.println("@@@@@@@@@:leader=" + leader.getId());
     System.out.println("@@@@@@@@@:commited=" + log.getLastCommittedIndex());
+    System.out.println("@@@@@@@@@:flushed=" + log.getFlushIndex());
     final long size = TestSegmentedRaftLog.getOpenSegmentSize(log);
     leader.getRaftServer().close();
 
