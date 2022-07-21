@@ -31,6 +31,7 @@ import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.protocol.RaftPeerId;
 import org.apache.ratis.protocol.SetConfigurationRequest;
+import org.apache.ratis.protocol.exceptions.SetConfigurationException;
 import org.apache.ratis.protocol.exceptions.LeaderNotReadyException;
 import org.apache.ratis.protocol.exceptions.ReconfigurationInProgressException;
 import org.apache.ratis.protocol.exceptions.ReconfigurationTimeoutException;
@@ -43,6 +44,7 @@ import org.apache.ratis.server.raftlog.RaftLog;
 import org.apache.ratis.server.raftlog.RaftLogBase;
 import org.apache.ratis.server.storage.RaftStorageTestUtils;
 import org.apache.ratis.util.JavaUtils;
+import org.apache.ratis.util.LifeCycle;
 import org.apache.ratis.util.Log4jUtils;
 import org.apache.ratis.util.TimeDuration;
 import org.junit.Assert;
@@ -210,6 +212,44 @@ public abstract class RaftReconfigurationBaseTest<CLUSTER extends MiniRaftCluste
           SetConfigurationRequest.Arguments.newBuilder()
           .setServersInNewConf(peers)
           .setMode(SetConfigurationRequest.Mode.ADD).build());
+      Assert.assertTrue(reply.isSuccess());
+      waitAndCheckNewConf(cluster, change.allPeersInNewConf, 0, null);
+    }
+    cluster.close();
+  }
+
+  @Test
+  public void testSetConfigurationInCasMode() throws Exception {
+    runWithNewCluster(2, this::runTestSetConfigurationInCasMode);
+  }
+
+  private void runTestSetConfigurationInCasMode(CLUSTER cluster) throws Exception {
+    final RaftServer.Division leader = RaftTestUtil.waitForLeader(cluster);
+    List<RaftPeer> oldPeers = cluster.getPeers();
+
+    PeerChanges change = cluster.addNewPeers(1, true);
+    List<RaftPeer> peers = Arrays.asList(change.allPeersInNewConf);
+
+    try (final RaftClient client = cluster.createClient(leader.getId())) {
+      for (int i = 0; i < 10; i++) {
+        RaftClientReply reply = client.io().send(new SimpleMessage("m" + i));
+        Assert.assertTrue(reply.isSuccess());
+      }
+
+      testFailureCase("Can't set configuration in CAS mode ",
+          () -> client.admin().setConfiguration(SetConfigurationRequest.Arguments.newBuilder()
+              .setServersInNewConf(peers)
+              .setServersInCurrentConf(peers)
+              .setMode(SetConfigurationRequest.Mode.COMPARE_AND_SET)
+              .build()), SetConfigurationException.class);
+
+      Collections.shuffle(oldPeers);
+      RaftClientReply reply = client.admin().setConfiguration(
+          SetConfigurationRequest.Arguments.newBuilder()
+              .setServersInNewConf(peers)
+              .setServersInCurrentConf(oldPeers)
+              .setMode(SetConfigurationRequest.Mode.COMPARE_AND_SET)
+              .build());
       Assert.assertTrue(reply.isSuccess());
       waitAndCheckNewConf(cluster, change.allPeersInNewConf, 0, null);
     }
@@ -462,7 +502,7 @@ public abstract class RaftReconfigurationBaseTest<CLUSTER extends MiniRaftCluste
       Assert.assertEquals(leaderId, killed);
       final RaftPeerId newLeaderId = RaftTestUtil.waitForLeader(cluster).getId();
       LOG.info("newLeaderId: {}", newLeaderId);
-      TimeDuration.valueOf(500, TimeUnit.MILLISECONDS).sleep();
+      TimeDuration.valueOf(1500, TimeUnit.MILLISECONDS).sleep();
 
       LOG.info("start new peers: {}", Arrays.asList(c1.newPeers));
       for (RaftPeer np : c1.newPeers) {
@@ -474,9 +514,14 @@ public abstract class RaftReconfigurationBaseTest<CLUSTER extends MiniRaftCluste
       } catch(TimeoutException ignored) {
       }
 
-      // the client fails with the first leader, and then retry the same setConfiguration request
-      waitAndCheckNewConf(cluster, c2.allPeersInNewConf, 1, Collections.singletonList(leaderId));
-      setConf.get(2, TimeUnit.SECONDS);
+      RaftServerProxy newServer = cluster.getServer(c1.newPeers[0].getId());
+      if (newServer.getLifeCycleState() == LifeCycle.State.CLOSED) {
+        LOG.info("New peer {} is shutdown. Skip the check", c1.newPeers[0].getId());
+      } else {
+        // the client fails with the first leader, and then retry the same setConfiguration request
+        waitAndCheckNewConf(cluster, c2.allPeersInNewConf, 1, Collections.singletonList(leaderId));
+        setConf.get(2, TimeUnit.SECONDS);
+      }
     } finally {
       if (clientThread != null) {
         clientRunning.set(false);
